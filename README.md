@@ -6,3 +6,9 @@ firebase functions:secrets:set WA_TOKEN WA_APP_SECRET SMS_AUTHKEY && firebase de
 
 Alert status flow: queued → sending → sent_to_provider → delivered (WhatsApp webhook only) | retrying → failed | cancelled.
 SMS stays "sent_to_provider" unless you add your gateway's delivery-report webhook; the app must never show it as delivered.
+
+## Module 2 additions (location)
+New callables: `shareLocation`, `triggerSos`, `updateSharedLocation`, `setSharePaused`, `stopSharing`. `recordCheckin` now accepts optional `location` + `shareWithContacts`.
+New params: `WA_LOCATION_TEMPLATE`, `SMS_LOCATION_TEMPLATE_ID`. Both templates take 4 variables:
+`ANBORA: {{1}} has sent {{2}}. Location: {{3}}. Time: {{4}}. Please try contacting them.` (get this wording approved / DLT-registered).
+Contacts receive a one-time Google Maps link per share. There is no live viewer page for contacts yet; background updates are stored server-side only.
