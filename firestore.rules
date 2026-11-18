@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function me(uid) { return request.auth != null && request.auth.uid == uid; }
+
+    // User doc is created by the server (initUser). Clients may edit only these fields.
+    // lastConfirmedAt, escalation and reminder fields are server-only.
+    match /users/{uid} {
+      allow read: if me(uid);
+      allow create, delete: if false;
+      allow update: if me(uid) && request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['name','phone','language','timezone','fcmTokens','checkinIntervalMinutes','notificationPrefs']);
+
+      // Check-ins, alerts, events: written only by Cloud Functions.
+      match /checkins/{id} { allow read: if me(uid); allow write: if false; }
+      match /alerts/{id}   { allow read: if me(uid); allow write: if false; }
+      match /events/{id}   { allow read: if me(uid); allow write: if false; }
+
+      // Contacts: client creates them as 'pending' only; consent is granted server-side.
+      match /contacts/{id} {
+        allow read, delete: if me(uid);
+        allow create: if me(uid) && request.resource.data.consentStatus == 'pending';
+        allow update: if me(uid) && request.resource.data.consentStatus == resource.data.consentStatus
+          && request.resource.data.phone == resource.data.phone;
+      }
+    }
+  }
+}
